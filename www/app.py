@@ -12,18 +12,17 @@ def index(request):
 
 @asyncio.coroutine
 def init(loop):
-    app = web.Application(loop=loop)
-    app.router.add_route('GET', '/', index)
-    server = yield from loop.create_server(app.make_handler(), '127.0.0.1', 8000)
-    logging.info('server has started at http://127.0.0.1:8000')
+    app = web.Application(loop=loop)  # 生成app对象，传入事件循环
+    app.router.add_route('GET', '/', index)  # 添加路由
+    server = yield from loop.create_server(app.make_handler(), '127.0.0.1', 8000)  # 等待服务器生成
+    logging.info('server has started at http://127.0.0.1:8000')  # 打印日志
     return server
 
 
 def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(loop))
-    loop.run_forever()
-
+    loop.run_forever()  # 等待事务
 
 if __name__ == '__main__':
     main()
