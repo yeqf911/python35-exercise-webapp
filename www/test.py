@@ -91,10 +91,16 @@ def update(loop):
         yield from u.updates()
 
 
-def findNumber(loop):
+def findAttrs(loop):
     pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
-    n = yield from User.findNumber(where="admin='lol'")
+    n = yield from User.findAttrs(selectField='name', where="admin='lol'")
     print(n)
 
 
-loop.run_until_complete(findNumber(loop))
+def find(loop):
+    pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
+    user = yield from User.find('001459001001479860c50e88a044b69b253118bb688fb87000')
+    print(user)
+
+
+loop.run_until_complete(findAttrs(loop))

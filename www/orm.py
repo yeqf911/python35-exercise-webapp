@@ -35,7 +35,7 @@ def select(sql, args, size=None):
         cursor = yield from connection.cursor(aiomysql.DictCursor)
         yield from cursor.execute(sql.replace('?', '%s'), args or ())
         if size:
-            rs = yield from cursor.fetchmany(size)
+            rs = yield from cursor.fetchmany(size)  # 返回的是list，里面的元素是dict
         else:
             rs = yield from cursor.fetchall()
         yield from cursor.close()
@@ -137,7 +137,7 @@ class ModelMetaclass(type):
         # 对与sequence中的每一个item都执行function函数，返回一个list
         escaped_fields = list(map(lambda f: '%s' % f, fields))
         attrs['__mapping__'] = mapping
-        attrs['__table__'] = name
+        attrs['__table__'] = table_name
         attrs['__primary_key__'] = primary_key
         attrs['__fields__'] = fields
         attrs['__select__'] = 'SELECT %s, %s FROM %s' % (primary_key, ', '.join(escaped_fields), table_name)
@@ -225,19 +225,21 @@ class Model(dict, metaclass=ModelMetaclass):
             return None
         return [cls(**x) for x in rs]  # 返回符合条件的所有对象
 
+    # 此处我修改了一下，将这个函数改成返回查询结果集的制定属性集合
     @classmethod
     @asyncio.coroutine
-    def findNumber(cls, where=None, args=None):
-        sql = [cls.__select__]
+    def findAttrs(cls, selectField='id', where=None, args=None):
+        sql = ['select %s _num_ from %s' % (selectField, cls.__table__)]
         if where:
             sql.append('where')
             sql.append(where)
         if args is None:
             args = []
-        rs = yield from select(' '.join(sql), args)
-        if len(rs) == 0:
+        rs = yield from select(' '.join(sql), args)  # 返回的结果是一个list，集合的元素是dict
+        if len(rs) == 0:  # 这里的len(rs)就是集合的大小，即是返回的条数
             return 0
-        return len(rs)
+        rs = [r['_num_'] for r in rs]  # 取出每个字典的 键'_num_' 对应的值，即是我们selectField的值
+        return rs
 
     # ########################### 实例函数 ################################
     @asyncio.coroutine
