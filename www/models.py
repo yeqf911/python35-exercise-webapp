@@ -7,13 +7,13 @@ import random
 logging.basicConfig(level=logging.INFO)
 
 
+# 获得唯一的id, 但是还有一个问题，就是先后构造两个用户对象的时候，产生的id会一样
 def next_id():
     t = int(time.time() * 1000)
     return '%015d%s000' % (t, uuid.uuid4().hex)
 
 
 class Article(Model):
-    logging.info('start')
     __table__ = 'articles'
     id = StringField(primary_key=True, default=next_id(), colum_type='varchar(50)')
     user_id = StringField(colum_type='varchar(50)')

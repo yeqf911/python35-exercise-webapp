@@ -54,12 +54,14 @@ import aiomysql
 
 loop = asyncio.get_event_loop()
 
+
 # ------------------------------ 操作数据库的函数群补测试通过 ----------------------------------
 def save(loop):
     pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
     user1 = User(name='xiazi', email='xaizi@outlook.com', password='123456789', image='about:blank',
                  admin='lol', )
     yield from user1.save()
+    # 此处这个第二个user的id会和第一个id一样，不知道为什么
     user2 = User(name='ez', email='ez@163.com', password='abcdefg', image='about:blank',
                  admin='lol', )
     yield from user1.save()
@@ -93,5 +95,6 @@ def findNumber(loop):
     pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
     n = yield from User.findNumber(where="admin='lol'")
     print(n)
+
 
 loop.run_until_complete(findNumber(loop))
