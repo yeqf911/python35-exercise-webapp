@@ -1,6 +1,8 @@
 import asyncio
 import aiomysql
-from www import logging
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 def log(sql, args=()):
@@ -17,11 +19,10 @@ def create_pool(loop, **kwargs):
             user=kwargs['user'],
             password=kwargs['password'],
             db=kwargs['db'],
-            charset=kwargs.get('charset', 'utf-8'),
             autocommit=kwargs.get('autocommit', True),
             maxsize=kwargs.get('maxsize', 10),
             minsize=kwargs.get('minsize', 1),
-            loop=loop,
+            loop=loop
     )
 
 
@@ -110,7 +111,8 @@ class ModelMetaclass(type):
     def __new__(cls, name, bases, attrs):
         # 排除Model本身
         if name == 'Model':
-            type.__init__(cls, name, bases, attrs)
+            # 此处一定要返回，即return不然得到的Model基类为NoneType, 而且不能写错了，要__new__() 不是 __init__()
+            return type.__new__(cls, name, bases, attrs)
         table_name = attrs.get('__table__', None) or name
         logging.info('found model: %s (table: %s)' % (name, table_name))
         mapping = dict()
@@ -118,7 +120,7 @@ class ModelMetaclass(type):
         primary_key = None
         for k, v in attrs.items():
             if isinstance(v, Field):
-                logging.info('found mapping: %s ----> %s', (k, v))
+                logging.info('found mapping: %s ----> %s' % (k, v))
                 mapping[k] = v
                 # 如果是v存在主键，则做主键处理
                 if v.primary_key:
@@ -133,18 +135,19 @@ class ModelMetaclass(type):
             attrs.pop(k)
         # map(function, sequence)函数类似于hadoop中mapreduce的机制
         # 对与sequence中的每一个item都执行function函数，返回一个list
-        escaped_fields = list(map(lambda f: '\'%s\'' % f, fields))
+        escaped_fields = list(map(lambda f: '%s' % f, fields))
         attrs['__mapping__'] = mapping
         attrs['__table__'] = name
         attrs['__primary_key__'] = primary_key
-        attrs['__field__'] = fields
-        attrs['__select__'] = 'SELECT `%s`, %s FROM `%s`' % (primary_key, ', '.join(escaped_fields), table_name)
-        attrs['__insert__'] = 'INSERT INTO `%s` (%s, `%s`) VALUE (%s)' % (
+        attrs['__fields__'] = fields
+        attrs['__select__'] = 'SELECT %s, %s FROM %s' % (primary_key, ', '.join(escaped_fields), table_name)
+        attrs['__insert__'] = 'INSERT INTO %s (%s, %s) VALUE (%s)' % (
             table_name, ', '.join(escaped_fields), primary_key, create_args_string(len(escaped_fields) + 1))
-        attrs['__update__'] = 'UPDATE `%s` SET %s WHERE `%s`=?' % (
-            table_name, ', '.join(map(lambda f: '`%s`=?' % mapping.get(f).name or f), fields), primary_key)
-        attrs['__delete__'] = 'DELETE FROM `%s` WHERE `%s`=?' % (table_name, primary_key)
-        type.__new__(cls, name, bases, attrs)
+        attrs['__update__'] = 'UPDATE %s SET %s WHERE %s=?' % (
+            table_name, ', '.join(map(lambda f: '%s=?' % f, fields)), primary_key)
+        attrs['__delete__'] = 'DELETE FROM %s WHERE %s=?' % (table_name, primary_key)
+        # 此处也请务必返回实例，不然得到的为NoneType对象
+        return type.__new__(cls, name, bases, attrs)
 
 
 class Model(dict, metaclass=ModelMetaclass):
@@ -181,7 +184,8 @@ class Model(dict, metaclass=ModelMetaclass):
     @classmethod
     @asyncio.coroutine
     def find(cls, pk):
-        rs = yield from select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), pk, 1)
+        logging.info(cls.__select__ + ' ' + cls.__primary_key__)
+        rs = yield from select('%s where %s=?' % (cls.__select__, cls.__primary_key__), pk, 1)
         if len(rs) == 0:  # 如果查找内容长度为0，表示没有找到，返回None
             return None
         logging.info('find an object type:%s' % cls.__table__)
@@ -190,7 +194,7 @@ class Model(dict, metaclass=ModelMetaclass):
     @classmethod
     @asyncio.coroutine
     def findAll(cls, where=None, args=None, **kwargs):
-        sql = list(cls.__select__)
+        sql = [cls.__select__]
         if where:  # 如果有where条件，类似于 City='Beijing' 之类的
             sql.append('where')  # sql关键字
             sql.append(where)
@@ -230,10 +234,10 @@ class Model(dict, metaclass=ModelMetaclass):
             sql.append(where)
         if args is None:
             args = []
-        rs = yield from select(' '.join(sql), args, 1)
+        rs = yield from select(' '.join(sql), args)
         if len(rs) == 0:
             return 0
-        return rs[0]['_num_']
+        return len(rs)
 
     # ########################### 实例函数 ################################
     @asyncio.coroutine
@@ -249,13 +253,13 @@ class Model(dict, metaclass=ModelMetaclass):
         args = list(map(self.getValueOrDefault, self.__fields__))
         args.append(self.getValueOrDefault(self.__primary_key__))
         row = yield from execute(self.__update__, args)
-        if rs != 1:
+        if row != 1:
             logging.warning('failed to update recode: affected rows: %s' % row)
 
     @asyncio.coroutine
     def remove(self):
-        args = list(map(self.getValueOrDefault, self.__fields__))
-        args.append(self.getValueOrDefault(self.__primary_key__))
+        # 删除操作只需要主键(id)参数， args必须为列表
+        args = [self.getValueOrDefault(self.__primary_key__)]
         row = yield from execute(self.__delete__, args)
-        if rs != 1:
+        if row != 1:
             logging.warning('failed to delete recode: affected rows: %s' % row)

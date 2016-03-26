@@ -1,9 +1,9 @@
 import logging
-
-logging.basicConfig(level=logging.INFO)
 import asyncio, os, json, time
 from datetime import datetime
 from aiohttp import web
+
+logging.basicConfig(level=logging.INFO)
 
 
 def index(request):
@@ -23,6 +23,7 @@ def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(loop))
     loop.run_forever()  # 等待事务
+
 
 if __name__ == '__main__':
     main()
