@@ -189,7 +189,7 @@ class Model(dict, metaclass=ModelMetaclass):
         if len(rs) == 0:  # 如果查找内容长度为0，表示没有找到，返回None
             return None
         logging.info('find an object type:%s' % cls.__table__)
-        return cls(**rs[0])  # 返回这个类型的一个对象
+        return cls(**rs[0])  # 返回这个类型的一个对象, **是解包操作， *是列表解包, **是字典解包
 
     @classmethod
     @asyncio.coroutine
