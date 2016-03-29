@@ -5,6 +5,9 @@
     <title>太阳尚远</title>
 </head>
 <body>
-你好世界
+<h1>All users</h1>
+{% for u in users %}
+<p>{{ u.name }} / {{ u.email }} / {{u.create_time}}</p>
+{% endfor %}
 </body>
 </html>

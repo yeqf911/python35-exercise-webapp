@@ -58,18 +58,18 @@
 # # ------------------------------ 操作数据库的函数群补测试通过 ----------------------------------
 # def save(loop):
 #     pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
-#     user1 = User(name='xiazi', email='xaizi@outlook.com', password='123456789', image='about:blank',
-#                  admin='lol', )
+#     user1 = User(name='sanli', email='sanli@outlook.com', password='123456789', image='about:blank',
+#                  admin='juren', )
 #     yield from user1.save()
 #     # 此处这个第二个user的id会和第一个id一样，不知道为什么
 #     user2 = User(name='ez', email='ez@163.com', password='abcdefg', image='about:blank',
 #                  admin='lol', )
-#     yield from user1.save()
+#     yield from user2.save()
 #
 #
 # def findAll(loop):
 #     pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
-#     users = yield from User.findAll(where="admin='lol'")
+#     users = yield from User.findAll()
 #     print(users)
 #
 #
@@ -103,7 +103,7 @@
 #     print(user)
 #
 #
-# loop.run_until_complete(findAttrs(loop))
+# loop.run_until_complete(save(loop))
 # d = {'name': 'xoaming', 'age': 15, 'score': 99, 'addr': 'anhui'}
 #
 # def f(**kwargs):
@@ -122,16 +122,47 @@
 # f(**d)
 # ff(*l)
 
-import asyncio
+# import asyncio
+#
+#
+# @asyncio.coroutine
+# def hello():
+#     print('hello world')
+#     r = yield from asyncio.sleep(3)
+#     print('i an last but first')
+#
+#
+# @asyncio.coroutine
+# def index():
+#     print('i am coroutine')
+#
+#
+# class Base:
+#     def index(self):
+#         print('i am not coroutine')
+#
+#
+# class A(Base):
+#     @asyncio.coroutine
+#     def index(self):
+#         print('i am corortine')
+#
+# a = Base()
+# loop = asyncio.get_event_loop()
+# loop.run_until_complete(a.index())
+# loop.close()
+
+import uuid
+import time
 
 
-@asyncio.coroutine
-def hello():
-    print('hello world')
-    r = yield from asyncio.sleep(3)
-    print('i an last but first')
+def nextid():
+    return str(time.time()) + str(uuid.uuid4().hex)
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(hello())
-loop.close()
+def hello(default=nextid):
+    print(default() + 'hellol')
+
+hello()
+time.sleep(2)
+hello()

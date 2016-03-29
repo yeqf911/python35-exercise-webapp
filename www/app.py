@@ -7,6 +7,7 @@ import json
 from jinja2 import Environment, FileSystemLoader
 from www import webcoro
 from www import orm
+from www import config
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,7 +26,7 @@ def init_jinja2(app, **kw):
     path = kw.get('path', None)
     if path is None:
         # os.path.abspath(__file__)是获取当前文件的绝对目录
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template')
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
         # create one Environment object on application initialization and use that to load templates.
     logging.info('set jinja2 template path: %s' % path)
     env = Environment(loader=FileSystemLoader(path), **options)
@@ -40,15 +41,18 @@ def init_jinja2(app, **kw):
 # 设置日志拦截器
 async def logger_factory(app, handler):
     logging.info('logger_factory --- 2')
+
     async def logger(request):
         logging.info('logger_factory: request: %s %s' % (request.method, request.path))
         return (await handler(request))
+
     return logger
 
 
 # 设置数据拦截器
 async def data_factory(app, handler):
     logging.info('data_factory --- 2')
+
     async def parse_data(request):
         if request.method == 'POST':
             if request.content_type.startwith('application/json'):
@@ -68,8 +72,11 @@ async def data_factory(app, handler):
 测试发现，拦截器顺序是:
     客户端发送请求 -> logger_factory -> RequestHandler -> index处理(最终的url处理函数) -> response_factory
 """
+
+
 async def response_factory(app, handler):
     logging.info('response_factory --- 2')
+
     async def response(request):
         rs = await handler(request)
         if isinstance(rs, web.StreamResponse):
@@ -87,18 +94,18 @@ async def response_factory(app, handler):
             return resp
         if isinstance(rs, dict):
             template = rs.get('__template__')
-            if template is not None:
+            if template is None:
                 # 将rs格式化成json格式的字符串再encode成utf8的bytes
                 resp = web.Response(
                         body=json.dumps(rs, ensure_ascii=False, default=lambda o: o.__dict__).encode('utf-8'))
                 resp.content_type = 'application/json;charset=utf-8'
-                logging.info('Response dict(template not None): %s %s' % (rs, resp.content_type))
+                logging.info('Response dict(template is None): %s %s' % (rs, resp.content_type))
                 return resp
             else:
-                rs['__user__'] = request.__user__
+                # rs['__user__'] = request.__user__
                 resp = web.Response(body=app['__templating__'].get_template(template).render(**rs).encode('utf-8'))
                 resp.content_type = 'text/html;charset=utf-8'
-                logging.info('Response dict(template is None): %s %s' % (rs, resp.content_type))
+                logging.info('Response dict(template not None): %s %s' % (rs, resp.content_type))
                 return resp
         if isinstance(rs, int) and 100 <= rs <= 600:
             logging.info('Response int: %s' % (str(rs)))
@@ -134,14 +141,16 @@ def datetime_filter(t):
 
 
 async def init(loop):
-    await orm.create_pool(loop, host='127.0.0.1', port=3306, user='root', password='123456', db='awesome')
+    configs = config.configs
+    await orm.create_pool(loop, **configs.get('db'))
     # 添加拦截器，请求进来和返回请求结果都可以先经过拦截器处理一下
     """
     看官方文档说：Every middleware factory should accept two parameters, an app instance and a handler,
     and return a new handler.
     但是这个handler是怎么传入的呢？当一个请求过来的时候，aiohttp内部是什么机制来将handler与我们请求的url处理函数对应上的？
     """
-    app = web.Application(loop=loop, middlewares=[data_factory, response_factory, logger_factory])  # 生成app对象，传入事件循环
+    app = web.Application(loop=loop, middlewares=[
+        data_factory, response_factory, logger_factory])  # 生成app对象，传入事件循环
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     webcoro.add_routes(app, 'handlers')
     webcoro.add_static(app, 'static')
