@@ -97,5 +97,5 @@ def add_routes(app, model_name):
 
 def add_static(app, static):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), static)
-    app.router.add_static('/staric/', path)
+    app.router.add_static('/static/', path)
     logging.info('add static %s ==> %s' % ('/static/', path))

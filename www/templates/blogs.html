@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %} 日志 {% endblock %}
+
+{% block content %}
+<div class="uk-width-medium-3-4">
+    {% for blog in blogs %}
+    <article class="uk-article">
+        <h2><a href="/blog/{{ blog.id }}">{{ blog.name }}</a></h2>
+        <p class="uk-article-meta">发表于{{ blog.create_time }}</p>
+        <p>{{ blog.summery }}</p>
+        <p><a href="/blog/{{ blog.id }}">继续阅读 <i class="uk-icon-angle-double-right"></i></a></p>
+    </article>
+    <hr class="uk-article-divider">
+    {% endfor%}
+</div>
+
+<div class="uk-width-medium-1-4">
+    <div class="uk-panel uk-panel-header">
+        <h3 class="uk-panel-title">友情链接</h3>
+        <ul class="uk-list uk-list-line">
+            <li class="uk-icon-thumbs-o-up"><a href="#" target="_blank">编程</a></li>
+            <li class="uk-icon-thumbs-o-up"><a href="#" target="_blank">分享</a></li>
+            <li class="uk-icon-thumbs-o-up"><a href="#" target="_blank">随笔</a></li>
+            <li class="uk-icon-thumbs-o-up"><a href="#" target="_blank">关于</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

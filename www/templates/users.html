@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}用户{% endblock%}
+
+{% block content %}
+<div class="uk-width-medium-3-4">
+    {% for u in users %}
+    <p>{{ u.name }} / {{ u.email }}</p>
+    {% endfor %}
+</div>
+{% endblock %}

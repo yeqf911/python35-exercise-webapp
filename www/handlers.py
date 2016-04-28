@@ -1,7 +1,5 @@
-from www.webcoro import *
-from aiohttp import web
-import logging
 from www.models import *
+from www.webcoro import *
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,6 +13,12 @@ def index(request):
     }
 
 
+@get('/blog')
+def blog(requests):
+    users = yield from User.findAll()
+    return dict(__template__='blogs.html', users=users)
+
+
 @get('/download')
 def download(request):
     with open('/home/idouby/Pictures/sanli.jpg', 'rb') as file:
@@ -22,10 +26,26 @@ def download(request):
         return content
 
 
-@post('/login')
+@get('/api/users')
+def users(requests):
+    user = yield from User.findAll()
+    return dict(users=user)
+
+
+@get('/login')
 def login(request):
     return web.Response(body=b'lalala')
 
-# @post('/index')
-# def pindex(request):
-#     return 'I love you'
+
+@get('/')
+def index(request):
+    summary = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+    blogs = [
+        Article(id='1', name='Test Blog', summary=summary, created_time=time.time() - 120),
+        Article(id='2', name='Something New', summary=summary, created_time=time.time() - 3600),
+        Article(id='3', name='Learn Swift', summary=summary, created_time=time.time() - 7200)
+    ]
+    return {
+        '__template__': 'blogs.html',
+        'blogs': blogs
+    }

@@ -101,11 +101,11 @@
 #     pool = yield from orm.create_pool(loop, user='root', password='123456', db='awesome')
 #     user = yield from User.find('001459001001479860c50e88a044b69b253118bb688fb87000')
 #     print(user)
-#
-#
+
 # loop.run_until_complete(save(loop))
+
 # d = {'name': 'xoaming', 'age': 15, 'score': 99, 'addr': 'anhui'}
-#
+
 # def f(**kwargs):
 #     name = kwargs.get('name', 'qianfeng')
 #     age = kwargs.get('age', 10)
@@ -152,17 +152,29 @@
 # loop.run_until_complete(a.index())
 # loop.close()
 
-import uuid
-import time
+# import uuid
+# import time
+#
+#
+# def nextid():
+#     return str(time.time()) + str(uuid.uuid4().hex)
+#
+#
+# def hello(default=nextid):
+#     print(default() + 'hellol')
+#
+# hello()
+# time.sleep(2)
+# hello()
+#
+# import urllib.request as ur
+# import json
+# text = ur.urlopen('http://127.0.0.1:8000/api/users')
+# print(json.loads(str(text.read())))
+#
+l = []
 
-
-def nextid():
-    return str(time.time()) + str(uuid.uuid4().hex)
-
-
-def hello(default=nextid):
-    print(default() + 'hellol')
-
-hello()
-time.sleep(2)
-hello()
+if not l:
+    print('None')
+else:
+    print(1)

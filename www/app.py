@@ -16,12 +16,12 @@ logging.basicConfig(level=logging.INFO)
 def init_jinja2(app, **kw):
     logging.info('init jinja2...')
     options = dict(
-            autoescape=kw.get('autoescape', True),
-            block_start_string=kw.get('block_start_string', '{%'),
-            block_end_string=kw.get('block_end_string', '%}'),
-            variable_start_string=kw.get('variable_start_string', '{{'),
-            variable_end_string=kw.get('variable_end_string', '}}'),
-            auto_reload=kw.get('auto_eload', True)
+        autoescape=kw.get('autoescape', True),
+        block_start_string=kw.get('block_start_string', '{%'),
+        block_end_string=kw.get('block_end_string', '%}'),
+        variable_start_string=kw.get('variable_start_string', '{{'),
+        variable_end_string=kw.get('variable_end_string', '}}'),
+        auto_reload=kw.get('auto_eload', True)
     )
     path = kw.get('path', None)
     if path is None:
@@ -44,7 +44,7 @@ async def logger_factory(app, handler):
 
     async def logger(request):
         logging.info('logger_factory: request: %s %s' % (request.method, request.path))
-        return (await handler(request))
+        return await handler(request)
 
     return logger
 
@@ -62,7 +62,7 @@ async def data_factory(app, handler):
                 request.__data__ = await request.post()
                 logging.info('Request form: %s' % str(request.__data__))
         logging.info('data_factory')
-        return (await handler(request))
+        return await handler(request)
 
     return parse_data
 
@@ -97,7 +97,7 @@ async def response_factory(app, handler):
             if template is None:
                 # 将rs格式化成json格式的字符串再encode成utf8的bytes
                 resp = web.Response(
-                        body=json.dumps(rs, ensure_ascii=False, default=lambda o: o.__dict__).encode('utf-8'))
+                    body=json.dumps(rs, ensure_ascii=False, default=lambda o: o.__dict__).encode('utf-8'))
                 resp.content_type = 'application/json;charset=utf-8'
                 logging.info('Response dict(template is None): %s %s' % (rs, resp.content_type))
                 return resp
@@ -120,7 +120,6 @@ async def response_factory(app, handler):
         resp.content_type = 'text/plain;charset=utf-8'  # 返回的类型是无格式的纯文本
         logging.info('Response default: %s %s' % (rs, resp.content_type))
         return resp
-
     return response
 
 
